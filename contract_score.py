@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import json
+from os.path import dirname
+
+import logging
+
+from loopchain.blockchain import ScoreBase
+from loopchain.tools import ScoreDatabaseType, ScoreHelper
+
+
+class UserScore(ScoreBase):
+    CONTRACT_DB_ID = 'contract'
+    USER_DB_ID = 'user'
+    LOG_PREFIX = "[CONTRACT SAMPLE SCORE] "
+    DB_CODE = "UTF-8"
+    # for find last index
+    LAST_INDEX_KEY = "last_index"
+
+    # json keys
+    PROPOSER = "proposer"
+    COUNTERPART = "counterparts"
+    CONTENT = "content"
+    QUORUM = "quorum"
+    APPROVERS = "approvers"
+
+    def __init__(self, info=None):
+        """체인코드 생성
+        체인코드 디비 생성
+        """
+        super().__init__(info)
+        if info is None:
+            with open(dirname(__file__)+'/'+ScoreBase.PACKAGE_FILE, "r") as f:
+                self.__score_info = json.loads(f.read())
+                f.close()
+        else:
+            self.__score_info = info
+
+    def __init_db(self):
+        helper = ScoreHelper()
+        if self.__contract_db is None:
+            logging.debug(self.LOG_PREFIX + "Init DB(%s)", self.CONTRACT_DB_ID)
+            self.__contract_db = helper.load_database(score_id=self.CONTRACT_DB_ID, database_type=ScoreDatabaseType.leveldb)
+        if self.__user_db is None:
+            logging.debug(self.LOG_PREFIX + "Init DB(%s)", self.USER_DB_ID)
+            self.__user_db = helper.load_database(score_id=self.USER_DB_ID, database_type=ScoreDatabaseType.leveldb)
+
+    # Invoke Sub-main
+    def invoke(self, transaction, block):
+        """transaction 실행
+        :param transaction:
+        :param block:
+        :return:
+        """
+
+        data = transaction.get_data_string()
+        tx_data = json.loads(data)
+        logging.debug(self.LOG_PREFIX + "tx_data : %s", tx_data)
+
+        tx_method = tx_data['method']
+        if tx_method == "propose":
+            self.propose(tx_data['params'])
+        elif tx_method == "issue_certificate":
+            self.approve(tx_data['params'])
+        else:
+            logging.error(self.LOG_PREFIX + "Unknown transaction method : " + tx_method)
+            raise Exception('method not found')
+
+    def query(self, params):
+        pass
+
+    def info(self):
+        pass
+
+    def propose(self, params):
+        """ add new contract  메세지 검사 생략
+
+        :param params: {"proposer": , "counterparts": [counterparties], "content": "contract text", "quorum": "(int)quorum"}
+        :return:
+        """
+        params[self.APPROVERS] = [params[self.PROPOSER]]
+        new_index = self.__get_last_index() + 1
+        input_contract = self.__json_to_utf8_str(params)
+
+        self.__contract_db.Put(new_index, input_contract)
+        self.__contract_db.Put(self.LAST_INDEX_KEY, new_index)
+
+        for counterpart in params[self.COUNTERPART]:
+            counterpart_contracts = self.__user_db.Get(counterpart)
+
+            if counterpart_contracts is None:
+                counterpart_contracts = "[]"
+
+            contract_list = json.loads(counterpart_contracts)
+            contract_list.append(new_index)
+            self.__user_db.Put(counterpart_contracts)
+
+        return {'code': 0}
+
+    def __json_to_utf8_str(self, json):
+        contract = json.dumps(json)
+        return contract.encode(self.DB_CODE)
+
+    def __get_last_index(self):
+        last_index = self.__contract_db.Get(self.LAST_INDEX_KEY)
+        if last_index is None:
+            last_index = 0
+            self.__contract_db.Put(self.LAST_INDEX_KEY, last_index)
+        return last_index
+
+    def approve(self, params):
+        pass
+
+
+
+
