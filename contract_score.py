@@ -62,7 +62,7 @@ class UserScore(ScoreBase):
         logging.debug(self.LOG_PREFIX + "tx_data : %s", str(tx_data))
 
         tx_method = tx_data['method']
-        logging.debug(self.LOG_PREFIX + 'find')
+        logging.debug(self.LOG_PREFIX + 'find ' + tx_method)
 
         if tx_method == "propose":
             logging.debug(self.LOG_PREFIX + 'propose start')
@@ -151,10 +151,14 @@ class UserScore(ScoreBase):
         return json_str.encode(self.DB_ENCODING)
 
     def __get_last_index(self):
+        logging.debug(self.LOG_PREFIX + '__get_last_index 0')
         last_index = self.__contract_db.Get(self.LAST_INDEX_KEY)
+        logging.debug(self.LOG_PREFIX + '__get_last_index 1')
         if last_index is None:
+            logging.debug(self.LOG_PREFIX + '__get_last_index 2')
             last_index = 0
-            self.__contract_db.Put(self.LAST_INDEX_KEY, last_index)
+            self.__contract_db.Put(self.LAST_INDEX_KEY, str(last_index))
+            logging.debug(self.LOG_PREFIX + '__get_last_index 3')
         return last_index
 
     def approve(self, params):
