@@ -114,7 +114,7 @@ class UserScore(ScoreBase):
         new_index = self.__get_last_index() + 1
         logging.debug(self.LOG_PREFIX + 'propose 0')
 
-        input_contract = self.__json_to_utf8(params)
+        input_contract = json.dumps(params)
         logging.debug(self.LOG_PREFIX + 'propose 1')
 
         self.__contract_db.Put(new_index, input_contract)
@@ -125,7 +125,7 @@ class UserScore(ScoreBase):
 
 
         for counterpart in params[self.COUNTERPARTIES]:
-            counterpart_contracts = self.__user_db.Get(counterpart.encode())
+            counterpart_contracts = self.__user_db.Get(counterpart)
             logging.debug(self.LOG_PREFIX + 'propose 4')
 
             if counterpart_contracts is None:
@@ -137,19 +137,13 @@ class UserScore(ScoreBase):
             contract_list.append(new_index)
             logging.debug(self.LOG_PREFIX + 'propose 6')
 
-            input_contract_list = self.__json_to_utf8(contract_list)
+            input_contract_list = json.dumps(contract_list)
             logging.debug(self.LOG_PREFIX + 'propose 7')
 
             self.__user_db.Put(counterpart, input_contract_list)
             logging.debug(self.LOG_PREFIX + 'propose 8')
 
         return {'code': 0}
-
-    def __json_to_utf8(self, json_data):
-        json_str = json.dumps(json_data)
-        logging.debug(self.LOG_PREFIX + '__json_to_utf8_str 1')
-
-        return json_str.encode(self.DB_ENCODING)
 
     def __get_last_index(self):
         logging.debug(self.LOG_PREFIX + '__get_last_index 0')
@@ -158,7 +152,7 @@ class UserScore(ScoreBase):
         if last_index is None:
             logging.debug(self.LOG_PREFIX + '__get_last_index 2')
             last_index = 0
-            self.__contract_db.Put(self.LAST_INDEX_KEY, str(last_index).encode())
+            self.__contract_db.Put(self.LAST_INDEX_KEY, last_index)
             logging.debug(self.LOG_PREFIX + '__get_last_index 3')
         return last_index
 
@@ -185,7 +179,7 @@ class UserScore(ScoreBase):
                 contract[self.APPROVERS].append(approve_user)
                 logging.debug(self.LOG_PREFIX + 'approve 4')
 
-                input_contract = self.__json_to_utf8(contract)
+                input_contract = self.json.dumps(contract)
                 logging.debug(self.LOG_PREFIX + 'approve 5')
 
                 self.__contract_db.Put(contract_id, input_contract)
