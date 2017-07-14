@@ -15,7 +15,7 @@ class UserScore(ScoreBase):
     LOG_PREFIX = "[CONTRACT SAMPLE SCORE] "
     DB_ENCODING = "utf-8"
     # for find last index
-    LAST_INDEX_KEY = b'last_index'
+    LAST_INDEX_KEY = 'last_index'
 
     # json keys
     PROPOSER = "proposer"
