@@ -108,7 +108,7 @@ class UserScore(ScoreBase):
         logging.debug(self.LOG_PREFIX + 'propose -2')
 
         params[self.APPROVERS] = [params[self.PROPOSER]]
-        logging.debug(self.LOG_PREFIX + 'propose -1')
+        logging.debug(self.LOG_PREFIX + 'propose -1 ' + str(params))
 
         new_index = self.__get_last_index() + 1
         logging.debug(self.LOG_PREFIX + 'propose 0')
