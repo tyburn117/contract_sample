@@ -8,7 +8,7 @@ import logging
 from loopchain.blockchain import ScoreBase
 from loopchain.tools import ScoreDatabaseType, ScoreHelper
 
-
+# 
 class UserScore(ScoreBase):
     CONTRACT_DB_ID = 'contract'
     USER_DB_ID = 'user'
