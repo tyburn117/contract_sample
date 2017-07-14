@@ -24,7 +24,7 @@ class UserScore(ScoreBase):
     QUORUM = "quorum"
     APPROVERS = "approvers"
     USER_ID  = "user_id"
-    ID = "id"
+    CONTRACT_ID = "contract_id"
 
     def __init__(self, info=None):
         """체인코드 생성
@@ -97,7 +97,7 @@ class UserScore(ScoreBase):
     def propose(self, params):
         """ add new contract  메세지 검사 생략
 
-        :param params: {"proposer": , "counterparts": [counterparties], "content": "contract text", "quorum": "(int)quorum"}
+        :param params: {"proposer": , "counterparties": [counterparties], "content": "contract text", "quorum": "(int)quorum"}
         :return:
         """
         params[self.APPROVERS] = [params[self.PROPOSER]]
@@ -137,7 +137,7 @@ class UserScore(ScoreBase):
         :param params: user_id, contract_id in json_params
         :return:
         """
-        contract_id = params[self.ID]
+        contract_id = params[self.CONTRACT_ID]
         approve_user = params[self.USER_ID]
         contract_str = self.__contract_db.Get(contract_id)
         contract = json.loads(contract_str, encoding=self.DB_ENCODING)
@@ -169,7 +169,7 @@ class UserScore(ScoreBase):
             contract = self.__contract_db.Get(contract_id)
             contract_json = json.loads(contract, encoding=self.DB_ENCODING)
             # add id to response
-            contract_json[self.ID] = contract_id
+            contract_json[self.CONTRACT_ID] = contract_id
             contract_list.append(contract_json)
 
         return contract_list
