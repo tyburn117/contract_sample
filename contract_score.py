@@ -238,7 +238,6 @@ class LocalDB:
 
     def __init__(self, db_name):
         helper = ScoreHelper()
-        logging.debug(self.LOG_PREFIX + "Init DB(%s)", db_name)
         self.db = helper.load_database(score_id=db_name, database_type=ScoreDatabaseType.leveldb)
 
     def Get(self, key):
