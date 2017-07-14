@@ -59,7 +59,7 @@ class UserScore(ScoreBase):
         self.__init_db()
         data = transaction.get_data_string()
         tx_data = json.loads(data)
-        logging.debug(self.LOG_PREFIX + "tx_data : %s", tx_data)
+        logging.debug(self.LOG_PREFIX + "tx_data : %s", str(tx_data))
 
         tx_method = tx_data['method']
         logging.debug(self.LOG_PREFIX + 'find')
