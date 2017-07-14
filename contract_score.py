@@ -179,7 +179,7 @@ class UserScore(ScoreBase):
                 contract[self.APPROVERS].append(approve_user)
                 logging.debug(self.LOG_PREFIX + 'approve 4')
 
-                input_contract = self.json.dumps(contract)
+                input_contract = json.dumps(contract)
                 logging.debug(self.LOG_PREFIX + 'approve 5')
 
                 self.__contract_db.Put(contract_id, input_contract)
