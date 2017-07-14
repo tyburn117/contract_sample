@@ -37,6 +37,8 @@ class UserScore(ScoreBase):
                 f.close()
         else:
             self.__score_info = info
+        self.__contract_db = None
+        self.__user_db = None
 
     def __init_db(self):
         helper = ScoreHelper()
