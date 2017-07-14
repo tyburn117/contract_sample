@@ -27,8 +27,7 @@ class UserScore(ScoreBase):
     CONTRACT_ID = "contract_id"
 
     def __init__(self, info=None):
-        """체인코드 생성
-        체인코드 디비 생성
+        """init score dir
         """
         super().__init__(info)
         if info is None:
@@ -75,7 +74,7 @@ class UserScore(ScoreBase):
             raise Exception('method not found')
 
     def query(self, query_request):
-        """인증서 생성 및 인증서 검증
+        """ contract verify
         :param query_request:
         :return:
         """
@@ -85,7 +84,6 @@ class UserScore(ScoreBase):
             q_method = req["method"]
             q_id = req['id']
 
-            # DN 요청
             if q_method == 'get_user_contracts':
                 user_contracts = self.get_user_contracts(req['params'])
                 if user_contracts is not None:
@@ -116,7 +114,6 @@ class UserScore(ScoreBase):
         self.__contract_db.Put(new_index, input_contract)
 
         self.__contract_db.Put(self.LAST_INDEX_KEY, new_index)
-
 
         for counterpart in params[self.COUNTERPARTIES]:
             counterpart_contracts = self.__user_db.Get(counterpart)
@@ -171,7 +168,7 @@ class UserScore(ScoreBase):
             raise Exception('this user is not in counterparties')
 
     def get_user_contracts(self, params):
-        """ get user contracts
+        """ get user's contracts
 
         :param params: user_id in json_params
         :return:
