@@ -106,54 +106,39 @@ class UserScore(ScoreBase):
         :param params: {"proposer": , "counterparties": [counterparties], "content": "contract text", "quorum": "(int)quorum"}
         :return:
         """
-        logging.debug(self.LOG_PREFIX + 'propose -2')
-
         params[self.APPROVERS] = [params[self.PROPOSER]]
-        logging.debug(self.LOG_PREFIX + 'propose -1 ' + str(params))
+        logging.debug(self.LOG_PREFIX + str(params))
 
         new_index = self.__get_last_index() + 1
-        logging.debug(self.LOG_PREFIX + 'propose 0')
 
         input_contract = json.dumps(params)
-        logging.debug(self.LOG_PREFIX + 'propose 1')
 
         self.__contract_db.Put(new_index, input_contract)
-        logging.debug(self.LOG_PREFIX + 'propose 2')
 
         self.__contract_db.Put(self.LAST_INDEX_KEY, new_index)
-        logging.debug(self.LOG_PREFIX + 'propose 3')
 
 
         for counterpart in params[self.COUNTERPARTIES]:
             counterpart_contracts = self.__user_db.Get(counterpart)
-            logging.debug(self.LOG_PREFIX + 'propose 4')
 
             if counterpart_contracts is None:
                 counterpart_contracts = "[]"
 
             contract_list = json.loads(counterpart_contracts)
-            logging.debug(self.LOG_PREFIX + 'propose 5')
 
             contract_list.append(new_index)
-            logging.debug(self.LOG_PREFIX + 'propose 6')
 
             input_contract_list = json.dumps(contract_list)
-            logging.debug(self.LOG_PREFIX + 'propose 7')
 
             self.__user_db.Put(counterpart, input_contract_list)
-            logging.debug(self.LOG_PREFIX + 'propose 8')
 
         return {'code': 0}
 
     def __get_last_index(self):
-        logging.debug(self.LOG_PREFIX + '__get_last_index 0')
         last_index = self.__contract_db.Get(self.LAST_INDEX_KEY)
-        logging.debug(self.LOG_PREFIX + '__get_last_index 1')
         if last_index is None:
-            logging.debug(self.LOG_PREFIX + '__get_last_index 2')
             last_index = 0
             self.__contract_db.Put(self.LAST_INDEX_KEY, last_index)
-            logging.debug(self.LOG_PREFIX + '__get_last_index 3')
         return last_index
 
     def approve(self, params):
@@ -164,26 +149,20 @@ class UserScore(ScoreBase):
         """
         contract_id = params[self.CONTRACT_ID]
         approve_user = params[self.USER_ID]
-        logging.debug(self.LOG_PREFIX + 'approve 1')
 
         contract_str = self.__contract_db.Get(contract_id)
-        logging.debug(self.LOG_PREFIX + 'approve 2')
 
         contract = json.loads(contract_str, encoding=self.DB_ENCODING)
-        logging.debug(self.LOG_PREFIX + 'approve 3')
 
 
         if approve_user in contract[self.COUNTERPARTIES]:
 
             if approve_user not in contract[self.APPROVERS]:
                 contract[self.APPROVERS].append(approve_user)
-                logging.debug(self.LOG_PREFIX + 'approve 4')
 
                 input_contract = json.dumps(contract)
-                logging.debug(self.LOG_PREFIX + 'approve 5')
 
                 self.__contract_db.Put(contract_id, input_contract)
-                logging.debug(self.LOG_PREFIX + 'approve 6')
 
                 return {'code': 0}
             else:
@@ -198,30 +177,23 @@ class UserScore(ScoreBase):
         :return:
         """
         user_id = params[self.USER_ID]
-        logging.debug(self.LOG_PREFIX + 'get_user_contracts 1')
 
         contract_id_str = self.__user_db.Get(user_id)
-        logging.debug(self.LOG_PREFIX + 'get_user_contracts 2')
 
         contract_id_list = json.loads(contract_id_str, encoding=self.DB_ENCODING)
-        logging.debug(self.LOG_PREFIX + 'get_user_contracts 3')
 
 
         contract_list = []
         # get all user contracts
         for contract_id in contract_id_list:
             contract = self.__contract_db.Get(contract_id)
-            logging.debug(self.LOG_PREFIX + 'get_user_contracts 4')
 
             contract_json = json.loads(contract, encoding=self.DB_ENCODING)
-            logging.debug(self.LOG_PREFIX + 'get_user_contracts 5')
 
             # add id to response
             contract_json[self.CONTRACT_ID] = contract_id
-            logging.debug(self.LOG_PREFIX + 'get_user_contracts 6')
 
             contract_list.append(contract_json)
-            logging.debug(self.LOG_PREFIX + 'get_user_contracts 7')
 
         return contract_list
 
