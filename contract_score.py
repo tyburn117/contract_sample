@@ -13,7 +13,7 @@ class UserScore(ScoreBase):
     CONTRACT_DB_ID = 'contract'
     USER_DB_ID = 'user'
     LOG_PREFIX = "[CONTRACT SAMPLE SCORE] "
-    DB_ENCODING = "UTF-8"
+    DB_ENCODING = "utf-8"
     # for find last index
     LAST_INDEX_KEY = b'last_index'
 
@@ -44,10 +44,11 @@ class UserScore(ScoreBase):
         helper = ScoreHelper()
         if self.__contract_db is None:
             logging.debug(self.LOG_PREFIX + "Init DB(%s)", self.CONTRACT_DB_ID)
-            self.__contract_db = helper.load_database(score_id=self.CONTRACT_DB_ID, database_type=ScoreDatabaseType.leveldb)
+
+            self.__contract_db = LocalDB(self.CONTRACT_DB_ID)
         if self.__user_db is None:
             logging.debug(self.LOG_PREFIX + "Init DB(%s)", self.USER_DB_ID)
-            self.__user_db = helper.load_database(score_id=self.USER_DB_ID, database_type=ScoreDatabaseType.leveldb)
+            self.__user_db = LocalDB(self.USER_DB_ID)
 
     # Invoke Sub-main
     def invoke(self, transaction, block):
@@ -111,16 +112,15 @@ class UserScore(ScoreBase):
         logging.debug(self.LOG_PREFIX + 'propose -1 ' + str(params))
 
         new_index = self.__get_last_index() + 1
-        new_index_byte = str(new_index).encode()
         logging.debug(self.LOG_PREFIX + 'propose 0')
 
         input_contract = self.__json_to_utf8(params)
         logging.debug(self.LOG_PREFIX + 'propose 1')
 
-        self.__contract_db.Put(new_index_byte, input_contract)
+        self.__contract_db.Put(new_index, input_contract)
         logging.debug(self.LOG_PREFIX + 'propose 2')
 
-        self.__contract_db.Put(self.LAST_INDEX_KEY, new_index_byte)
+        self.__contract_db.Put(self.LAST_INDEX_KEY, new_index)
         logging.debug(self.LOG_PREFIX + 'propose 3')
 
 
@@ -160,7 +160,7 @@ class UserScore(ScoreBase):
             last_index = 0
             self.__contract_db.Put(self.LAST_INDEX_KEY, str(last_index).encode())
             logging.debug(self.LOG_PREFIX + '__get_last_index 3')
-        return int(last_index)
+        return last_index
 
     def approve(self, params):
         """ approve one contract
@@ -168,7 +168,7 @@ class UserScore(ScoreBase):
         :param params: user_id, contract_id in json_params
         :return:
         """
-        contract_id = str(params[self.CONTRACT_ID]).encode()
+        contract_id = params[self.CONTRACT_ID]
         approve_user = params[self.USER_ID]
         logging.debug(self.LOG_PREFIX + 'approve 1')
 
@@ -203,20 +203,20 @@ class UserScore(ScoreBase):
         :param params: user_id in json_params
         :return:
         """
-        user_id = params[self.USER_ID].encode()
+        user_id = params[self.USER_ID]
         logging.debug(self.LOG_PREFIX + 'get_user_contracts 1')
 
         contract_id_str = self.__user_db.Get(user_id)
         logging.debug(self.LOG_PREFIX + 'get_user_contracts 2')
 
-        contract_id_list = json.loads(contract_id_str, encoding= self.DB_ENCODING)
+        contract_id_list = json.loads(contract_id_str, encoding=self.DB_ENCODING)
         logging.debug(self.LOG_PREFIX + 'get_user_contracts 3')
 
 
         contract_list = []
         # get all user contracts
         for contract_id in contract_id_list:
-            contract = self.__contract_db.Get(str(contract_id).encode())
+            contract = self.__contract_db.Get(contract_id)
             logging.debug(self.LOG_PREFIX + 'get_user_contracts 4')
 
             contract_json = json.loads(contract, encoding=self.DB_ENCODING)
@@ -230,6 +230,42 @@ class UserScore(ScoreBase):
             logging.debug(self.LOG_PREFIX + 'get_user_contracts 7')
 
         return contract_list
+
+
+class LocalDB:
+
+    DB_ENCODING = "utf-8"
+
+    def __init__(self, db_name):
+        helper = ScoreHelper()
+        logging.debug(self.LOG_PREFIX + "Init DB(%s)", db_name)
+        self.db = helper.load_database(score_id=db_name, database_type=ScoreDatabaseType.leveldb)
+
+    def Get(self, key):
+        """
+
+        :param key: string key
+        :return:
+        """
+        byte_key = bytes(key, self.DB_ENCODING)
+        try:
+            return self.db.Get(byte_key)
+        except Exception as e:
+            return None
+
+    def Put(self, key, value):
+        """
+
+        :param key: string key
+        :param value: string value
+        :return:
+        """
+        byte_key = bytes(key, self.DB_ENCODING)
+        byte_value = bytes(value, self.DB_ENCODING)
+        self.db.Put(byte_key, byte_value)
+
+
+
 
 
 
