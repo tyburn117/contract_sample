@@ -13,16 +13,18 @@ class UserScore(ScoreBase):
     CONTRACT_DB_ID = 'contract'
     USER_DB_ID = 'user'
     LOG_PREFIX = "[CONTRACT SAMPLE SCORE] "
-    DB_CODE = "UTF-8"
+    DB_ENCODING = "UTF-8"
     # for find last index
     LAST_INDEX_KEY = "last_index"
 
     # json keys
     PROPOSER = "proposer"
-    COUNTERPART = "counterparts"
+    COUNTERPARTIES = "counterparties"
     CONTENT = "content"
     QUORUM = "quorum"
     APPROVERS = "approvers"
+    USER_ID  = "user_id"
+    ID = "id"
 
     def __init__(self, info=None):
         """체인코드 생성
@@ -60,14 +62,34 @@ class UserScore(ScoreBase):
         tx_method = tx_data['method']
         if tx_method == "propose":
             self.propose(tx_data['params'])
-        elif tx_method == "issue_certificate":
+        elif tx_method == "approve":
             self.approve(tx_data['params'])
         else:
             logging.error(self.LOG_PREFIX + "Unknown transaction method : " + tx_method)
             raise Exception('method not found')
 
-    def query(self, params):
-        pass
+    def query(self, query_request):
+        """인증서 생성 및 인증서 검증
+        :param query_request:
+        :return:
+        """
+        self.__init_db()
+        try:
+            req = json.loads(query_request)
+            q_method = req["method"]
+            q_id = req['id']
+
+            # DN 요청
+            if q_method == 'get_user_contracts':
+                user_contracts = self.get_user_contracts(req['params'])
+                if user_contracts is not None:
+                    response = {"jsonrpc": "2.0", "code": 0, "response": {"user_contracts": user_contracts}, "id": q_id}
+                else:
+                    response = {"jsonrpc": "2.0", "code": -1, "response": {}, "id": q_id}
+
+                return json.dumps(response)
+        except Exception as e:
+            logging.error("query error" + e )
 
     def info(self):
         pass
@@ -85,7 +107,7 @@ class UserScore(ScoreBase):
         self.__contract_db.Put(new_index, input_contract)
         self.__contract_db.Put(self.LAST_INDEX_KEY, new_index)
 
-        for counterpart in params[self.COUNTERPART]:
+        for counterpart in params[self.COUNTERPARTIES]:
             counterpart_contracts = self.__user_db.Get(counterpart)
 
             if counterpart_contracts is None:
@@ -93,13 +115,14 @@ class UserScore(ScoreBase):
 
             contract_list = json.loads(counterpart_contracts)
             contract_list.append(new_index)
-            self.__user_db.Put(counterpart_contracts)
+            input_contract_list = self.__json_to_utf8_str(contract_list)
+            self.__user_db.Put(counterpart, input_contract_list)
 
         return {'code': 0}
 
-    def __json_to_utf8_str(self, json):
-        contract = json.dumps(json)
-        return contract.encode(self.DB_CODE)
+    def __json_to_utf8_str(self, json_data):
+        json_str = json.dumps(json_data)
+        return json_str.encode(self.DB_ENCODING)
 
     def __get_last_index(self):
         last_index = self.__contract_db.Get(self.LAST_INDEX_KEY)
@@ -109,7 +132,47 @@ class UserScore(ScoreBase):
         return last_index
 
     def approve(self, params):
-        pass
+        """ approve one contract
+
+        :param params: user_id, contract_id in json_params
+        :return:
+        """
+        contract_id = params[self.ID]
+        approve_user = params[self.USER_ID]
+        contract_str = self.__contract_db.Get(contract_id)
+        contract = json.loads(contract_str, encoding=self.DB_ENCODING)
+
+        if approve_user in contract[self.COUNTERPARTIES]:
+            if approve_user not in contract[self.APPROVERS]:
+                contract[self.APPROVERS].append(approve_user)
+                input_contract = self.__json_to_utf8_str(contract)
+                self.__contract_db.Put(contract_id, input_contract)
+                return {'code': 0}
+            else:
+                raise Exception('previous approve user' + approve_user)
+        else:
+            raise Exception('this user is not in counterparties')
+
+    def get_user_contracts(self, params):
+        """ get user contracts
+
+        :param params: user_id in json_params
+        :return:
+        """
+        user_id = params[self.USER_ID]
+        contract_id_str = self.__user_db.Get(user_id)
+        contract_id_list = json.loads(contract_id_str, encoding=self.DB_ENCODING)
+
+        contract_list = []
+        # get all user contracts
+        for contract_id in contract_id_list:
+            contract = self.__contract_db.Get(contract_id)
+            contract_json = json.loads(contract, encoding=self.DB_ENCODING)
+            # add id to response
+            contract_json[self.ID] = contract_id
+            contract_list.append(contract_json)
+
+        return contract_list
 
 
 
