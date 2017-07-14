@@ -54,7 +54,7 @@ class UserScore(ScoreBase):
         :param block:
         :return:
         """
-
+        self.__init_db()
         data = transaction.get_data_string()
         tx_data = json.loads(data)
         logging.debug(self.LOG_PREFIX + "tx_data : %s", tx_data)
