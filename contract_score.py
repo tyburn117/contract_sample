@@ -240,7 +240,7 @@ class LocalDB:
         :param key: string key
         :return:
         """
-        byte_key = bytes(key, self.DB_ENCODING)
+        byte_key = bytes(str(key), self.DB_ENCODING)
         try:
             return self.db.Get(byte_key)
         except Exception as e:
@@ -253,8 +253,8 @@ class LocalDB:
         :param value: string value
         :return:
         """
-        byte_key = bytes(key, self.DB_ENCODING)
-        byte_value = bytes(value, self.DB_ENCODING)
+        byte_key = bytes(str(key), self.DB_ENCODING)
+        byte_value = bytes(str(value), self.DB_ENCODING)
         self.db.Put(byte_key, byte_value)
 
 
