@@ -62,7 +62,10 @@ class UserScore(ScoreBase):
         logging.debug(self.LOG_PREFIX + "tx_data : %s", tx_data)
 
         tx_method = tx_data['method']
+        logging.debug(self.LOG_PREFIX + 'find')
+
         if tx_method == "propose":
+            logging.debug(self.LOG_PREFIX + 'propose start')
             self.propose(tx_data['params'])
         elif tx_method == "approve":
             self.approve(tx_data['params'])
@@ -102,8 +105,14 @@ class UserScore(ScoreBase):
         :param params: {"proposer": , "counterparties": [counterparties], "content": "contract text", "quorum": "(int)quorum"}
         :return:
         """
+        logging.debug(self.LOG_PREFIX + 'propose -2')
+
         params[self.APPROVERS] = [params[self.PROPOSER]]
+        logging.debug(self.LOG_PREFIX + 'propose -1')
+
         new_index = self.__get_last_index() + 1
+        logging.debug(self.LOG_PREFIX + 'propose 0')
+
         input_contract = self.__json_to_utf8_str(params)
         logging.debug(self.LOG_PREFIX + 'propose 1')
 
