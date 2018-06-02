@@ -1,0 +1,48 @@
+{
+  "id":"contract_sample",
+  "version":"0.0.1",
+  "auth":{
+    "name":"Theloop Dev Team",
+    "email":"dev@theloop.co.kr",
+    "org":"Theloop inc"
+  },
+  "dependencies":{},
+  "description":"contract_sample",
+  "repository":{
+    "type":"git",
+    "url":"git@github.com:theloopkr/contract_sample.git"
+  },
+  "homepage":"http://www.theloop.co.kr",
+  "function":{
+    "query":[
+      {
+        "method":"get_user_contracts",
+        "params":{"tx_hash":"user_id"},
+        "description":"Issue Certificate"
+      }
+    ],
+    "invoke":[
+      {
+        "method":"propose",
+        "params":
+           {
+             "proposer": "propose_user_id" ,
+             "counterparties": [],
+             "content": "contract text",
+             "quorum": "(int)quorum"
+           }
+        ,
+        "description":"new member"
+      },
+      {
+        "method":"approve",
+        "params":{
+            "user_id":"string" ,
+            "contract_id":"string"
+          }
+      }
+    ]
+  },
+  "main":"contract_score"
+
+}
