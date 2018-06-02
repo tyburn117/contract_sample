@@ -108,8 +108,8 @@ class SCOREBusinessLogic:
         to_id = params["to_id"]
         amount = params["amount"]
         int_amount = int(amount)
-        from_id_point
-        to_id_point
+        from_id_point = 0
+        to_id_point = 0
         if int_amount < 0 : 
             return SCOREResponse.exception("amount cannot be negative.")
 
@@ -120,18 +120,18 @@ class SCOREBusinessLogic:
                 return SCOREResponse.exception("from_id is not registered.")
 
             from_id_point = int(from_id_point)
-            if from_id_point < int(amount): 
+            if from_id_point < int_amount: 
                 return SCOREResponse.exception("point is not remainded")
-            from_id_point -= int(amount)
+            from_id_point -= int_amount
             try:
                 to_id_point = self.__db.get_in_invoke(to_id.encode()).decode()
             except:
                 return SCOREResponse.exception("to_id is not registered.")
 
-            to_id_point = int(to_id_money)
-            to_id_point += int(amount)
-            self.__db.put(from_id.encode(), str(from_id_money).encode())
-            self.__db.put(to_id.encode(), str(to_id_money).encode())
+            to_id_point = int(to_id_point)
+            to_id_point += int_amount
+            self.__db.put(from_id.encode(), str(from_id_point).encode())
+            self.__db.put(to_id.encode(), str(to_id_point).encode())
 
         except TypeError:
             return SCOREResponse.exception("Internal DB Error.")
